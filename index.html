@@ -796,52 +796,54 @@ function renderRiwayat(data) {
 
   tbodyRiwayat.innerHTML = '';
 
-  data.reverse().forEach(item => {
+  data
+    .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal))
+    .forEach(item => {
 
-    const jumlah =
-      Number(item.jumlah);
+      const jumlah =
+        Number(item.jumlah);
 
-    tbodyRiwayat.innerHTML += `
+      tbodyRiwayat.innerHTML += `
 
-      <tr class="border-b">
+        <tr class="border-b">
 
-        <td class="p-3">
-          ${item.tanggal}
-        </td>
+          <td class="p-3">
+            ${item.tanggal}
+          </td>
 
-        <td class="p-3">
-          ${item.jenis}
-        </td>
+          <td class="p-3">
+            ${item.jenis}
+          </td>
 
-        <td class="p-3">
-          ${item.keterangan}
-        </td>
+          <td class="p-3">
+            ${item.keterangan}
+          </td>
 
-        <td class="p-3">
-          Rp ${jumlah.toLocaleString('id-ID')}
-        </td>
+          <td class="p-3">
+            Rp ${jumlah.toLocaleString('id-ID')}
+          </td>
 
-        <td class="p-3 text-center">
+          <td class="p-3 text-center">
 
-          <button
-            onclick="editData(${item.id})"
-            class="bg-yellow-500 text-white px-3 py-1 rounded mr-2"
-          >
-            Edit
-          </button>
+            <button
+              onclick="editData(${item.id})"
+              class="bg-yellow-500 text-white px-3 py-1 rounded mr-2"
+            >
+              Edit
+            </button>
 
-          <button
-            onclick="hapusData(${item.id})"
-            class="bg-red-600 text-white px-3 py-1 rounded"
-          >
-            Hapus
-          </button>
+            <button
+              onclick="hapusData(${item.id})"
+              class="bg-red-600 text-white px-3 py-1 rounded"
+            >
+              Hapus
+            </button>
 
-        </td>
+          </td>
 
-      </tr>
-    `;
-  });
+        </tr>
+      `;
+    });
 }
 
 function renderSummary(data) {
