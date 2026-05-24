@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>Aplikasi Keuangan</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+<!-- LOADING -->
+<div id="loading"
+  class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[9999] hidden
+  flex items-center justify-center">
+
+  <div class="text-center">
+
+    <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent
+      rounded-full animate-spin mx-auto mb-4">
+    </div>
+
+    <p class="text-blue-600 font-semibold text-lg">
+      Loading...
+    </p>
+
+  </div>
+
+</div>
+
+<!-- TOPBAR -->
+<nav class="bg-blue-600 text-white shadow-lg fixed top-0 left-0 w-full z-50">
+
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+
+    <h1 class="text-2xl font-bold">
+      Keuangan Bulanan Madrasah
+    </h1>
+
+    <div class="flex gap-6">
+
+      <button
+        id="menuDashboard"
+        onclick="showPage('dashboard')"
+        class="px-4 py-2 rounded-lg transition duration-200 hover:bg-blue-500 active:scale-95"
+      >
+        Dashboard
+      </button>
+
+      <button
+        id="menuInput"
+        onclick="showPage('input')"
+        class="px-4 py-2 rounded-lg transition duration-200 hover:bg-blue-500 active:scale-95"
+      >
+        Input
+      </button>
+
+      <button
+        id="menuRekap"
+        onclick="showPage('rekap')"
+        class="px-4 py-2 rounded-lg transition duration-200 hover:bg-blue-500 active:scale-95"
+      >
+        Rekap
+      </button>
+
+    </div>
+
+  </div>
+
+</nav>
+
+<div class="p-6 pt-28">
+
+<div class="max-w-6xl mx-auto">
+
+  <!-- DASHBOARD -->
+  <div id="dashboardPage">
+
+    <h1 class="text-3xl font-bold mb-6">
+      Dashboard Keuangan
+    </h1>
+
+    <div class="grid md:grid-cols-4 gap-4 mb-6">
+
+      <div class="bg-green-100 p-4 rounded-xl shadow">
+        <h2 class="font-bold">Pemasukan</h2>
+        <p id="totalPemasukan" class="text-2xl">
+          Rp 0
+        </p>
+      </div>
+
+      <div class="bg-red-100 p-4 rounded-xl shadow">
+        <h2 class="font-bold">Pengeluaran</h2>
+        <p id="totalPengeluaran" class="text-2xl">
+          Rp 0
+        </p>
+      </div>
+
+      <div class="bg-blue-100 p-4 rounded-xl shadow">
+        <h2 class="font-bold">Saldo</h2>
+        <p id="saldo" class="text-2xl">
+          Rp 0
+        </p>
+      </div>
+
+      <div class="bg-yellow-100 p-4 rounded-xl">
+        <h2 class="font-bold">
+          KAS
+        </h2>
+        <p id="totalKas" class="text-2xl">
+          Rp 0
+        </p>
+      </div>
+
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow mt-6">
+
+      <h2 class="text-xl font-bold mb-4">
+        Grafik Pemasukan Bulanan
+      </h2>
+
+      <canvas id="chartKeuangan"></canvas>
+
+    </div>
+
+  </div>
+
+  <!-- INPUT -->
+  <div id="inputPage" class="hidden">
+
+    <h1 class="text-3xl font-bold mb-6">
+      Input Keuangan
+    </h1>
+
+    <div class="bg-white p-6 rounded-xl shadow">
+
+      <div class="grid md:grid-cols-4 gap-4">
+
+        <input
+          type="date"
+          id="tanggal"
+          class="border p-2 rounded"
+        />
+
+        <select
+          id="jenis"
+          class="border p-2 rounded"
+        >
+          <option value="pemasukan">Pemasukan</option>
+          <option value="pengeluaran">Pengeluaran</option>
+        </select>
+
+        <input
+          type="text"
+          id="keterangan"
+          placeholder="Keterangan"
+          class="border p-2 rounded"
+        />
+
+        <input
+          type="number"
+          id="jumlah"
+          placeholder="Jumlah"
+          class="border p-2 rounded"
+        />
+
+      </div>
+
+      <button
+        onclick="selectedIndex ? updateData() : tambahData()"
+        class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        Simpan
+      </button>
+
+    </div>
+
+  
+
+  <!-- RIWAYAT INPUT -->
+  <div class="mt-8">
+
+    <h2 class="text-2xl font-bold mb-4">
+      Riwayat Input
+    </h2>
+
+    <div class="bg-white rounded-xl shadow overflow-auto">
+
+      <table class="w-full">
+
+        <thead class="bg-gray-200">
+
+          <tr>
+            <th class="p-3 text-left">Tanggal</th>
+            <th class="p-3 text-left">Jenis</th>
+            <th class="p-3 text-left">Keterangan</th>
+            <th class="p-3 text-left">Jumlah</th>
+            <th class="p-3 text-center">Aksi</th>
+          </tr>
+
+        </thead>
+
+        <tbody id="tbodyRiwayat"></tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+  </div>
+  <!-- REKAP -->
+  <div id="rekapPage" class="hidden">
+
+    <h1 class="text-3xl font-bold mb-6">
+      Rekap Transaksi
+    </h1>
+
+    <!-- FILTER BULAN -->
+    <div class="bg-white p-4 rounded-xl shadow mb-6">
+
+      <div class="flex gap-4 items-center flex-wrap">
+
+        <label class="font-semibold">
+          Filter Bulan:
+        </label>
+
+        <select
+          id="filterBulan"
+          class="border p-2 rounded"
+          onchange="ambilData()"
+        >
+
+          <option value="">
+            Semua Bulan
+          </option>
+
+          <option value="01">Januari</option>
+          <option value="02">Februari</option>
+          <option value="03">Maret</option>
+          <option value="04">April</option>
+          <option value="05">Mei</option>
+          <option value="06">Juni</option>
+          <option value="07">Juli</option>
+          <option value="08">Agustus</option>
+          <option value="09">September</option>
+          <option value="10">Oktober</option>
+          <option value="11">November</option>
+          <option value="12">Desember</option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+    <!-- PEMASUKAN -->
+    <div class="bg-white rounded-xl shadow overflow-auto mb-6">
+
+      <div class="bg-green-500 text-white p-4 font-bold text-lg">
+        Tabel Pemasukan
+      </div>
+
+      <table class="w-full">
+
+        <thead class="bg-green-100">
+
+          <tr>
+            <th class="p-3 text-left">Tanggal</th>
+            <th class="p-3 text-left">Keterangan</th>
+            <th class="p-3 text-left">Jumlah</th>
+          </tr>
+
+        </thead>
+
+        <tbody id="tbodyPemasukan"></tbody>
+
+        <tfoot class="bg-green-200 font-bold">
+
+          <tr>
+            <td colspan="2" class="p-3 text-right">
+              Total
+            </td>
+
+            <td id="totalPemasukanTabel" class="p-3">
+              Rp 0
+            </td>
+          </tr>
+
+        </tfoot>
+
+      </table>
+
+    </div>
+
+    <!-- PENGELUARAN -->
+    <div class="bg-white rounded-xl shadow overflow-auto">
+
+      <div class="bg-red-500 text-white p-4 font-bold text-lg">
+        Tabel Pengeluaran
+      </div>
+
+      <table class="w-full">
+
+        <thead class="bg-red-100">
+
+          <tr>
+            <th class="p-3 text-left">Tanggal</th>
+            <th class="p-3 text-left">Keterangan</th>
+            <th class="p-3 text-left">Jumlah</th>
+          </tr>
+
+        </thead>
+
+        <tbody id="tbodyPengeluaran"></tbody>
+
+        <tfoot class="bg-red-200 font-bold">
+
+          <tr>
+            <td colspan="2" class="p-3 text-right">
+              Total Pengeluaran
+            </td>
+
+            <td id="totalPengeluaranTabel" class="p-3">
+              Rp 0
+            </td>
+          </tr>
+
+          <tr class="bg-blue-200">
+
+            <td colspan="2" class="p-3 text-right">
+              Sisa Saldo
+            </td>
+
+            <td id="sisaSaldoTabel" class="p-3">
+              Rp 0
+            </td>
+
+          </tr>
+
+        </tfoot>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
+
+</div>
+
+<script>
+
+const SHEET_ID =
+'1R9LSyCbUziowb52t5BVLUPiUugYn1IhyAl48ZQLhyFw';
+
+const API_KEY =
+'AIzaSyDZkp3tY5FtNVxigkEroedHVpgLhp1KwEI';
+
+const RANGE =
+'Keuangan!A:D';
+
+const READ_URL =
+`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+
+/*
+  GANTI URL DI HANDAP
+  KU URL WEB APP APPS SCRIPT
+*/
+
+const WRITE_URL =
+'https://script.google.com/macros/s/AKfycbxeGcMlt9F5XRGgb4b-UxQeJznAd0H_mFw1QJWPsuZzJFpxoehOeUUgP-kV5aHIDNX93w/exec';
+
+let chart;
+let selectedIndex = null;
+
+function showPage(page) {
+
+  // SEMBUNYIKAN PAGE
+  document
+    .getElementById('dashboardPage')
+    .classList.add('hidden');
+
+  document
+    .getElementById('inputPage')
+    .classList.add('hidden');
+
+  document
+    .getElementById('rekapPage')
+    .classList.add('hidden');
+
+  // RESET MENU ACTIVE
+  document
+    .getElementById('menuDashboard')
+    .classList.remove(
+      'bg-white',
+      'text-blue-600',
+      'font-bold'
+    );
+
+  document
+    .getElementById('menuInput')
+    .classList.remove(
+      'bg-white',
+      'text-blue-600',
+      'font-bold'
+    );
+
+  document
+    .getElementById('menuRekap')
+    .classList.remove(
+      'bg-white',
+      'text-blue-600',
+      'font-bold'
+    );
+
+  // DASHBOARD
+  if(page === 'dashboard') {
+
+    document
+      .getElementById('dashboardPage')
+      .classList.remove('hidden');
+
+    document
+      .getElementById('menuDashboard')
+      .classList.add(
+        'bg-white',
+        'text-blue-600',
+        'font-bold'
+      );
+  }
+
+  // INPUT
+  if(page === 'input') {
+
+    document
+      .getElementById('inputPage')
+      .classList.remove('hidden');
+
+    document
+      .getElementById('menuInput')
+      .classList.add(
+        'bg-white',
+        'text-blue-600',
+        'font-bold'
+      );
+  }
+
+  // REKAP
+  if(page === 'rekap') {
+
+    document
+      .getElementById('rekapPage')
+      .classList.remove('hidden');
+
+    document
+      .getElementById('menuRekap')
+      .classList.add(
+        'bg-white',
+        'text-blue-600',
+        'font-bold'
+      );
+  }
+}
+
+function showLoading() {
+
+  document
+    .getElementById('loading')
+    .classList.remove('hidden');
+}
+
+function hideLoading() {
+
+  document
+    .getElementById('loading')
+    .classList.add('hidden');
+}
+
+async function ambilData() {
+
+  showLoading();
+
+  try {
+
+    const res =
+      await fetch(READ_URL);
+
+    const result =
+      await res.json();
+
+    const rows =
+      result.values || [];
+
+    const data = rows
+      .slice(1)
+      .map((row, index) => ({
+
+        id: index + 2,
+
+        tanggal:
+          row[0] || '',
+
+        jenis:
+          row[1] || '',
+
+        keterangan:
+          row[2] || '',
+
+        jumlah:
+          row[3] || 0
+      }));
+
+    renderRekap(data);
+
+    renderRiwayat(data);
+
+    renderSummary(data);
+
+    renderChart(data);
+
+  } finally {
+
+    hideLoading();
+  }
+}
+
+async function tambahData() {
+
+  showLoading();
+
+  try {
+
+    const payload = {
+
+      action: 'add',
+
+      tanggal:
+        document.getElementById('tanggal').value,
+
+      jenis:
+        document.getElementById('jenis').value,
+
+      keterangan:
+        document.getElementById('keterangan').value,
+
+      jumlah:
+        document.getElementById('jumlah').value,
+    };
+
+    await fetch(WRITE_URL, {
+
+      method: 'POST',
+
+      body: JSON.stringify(payload)
+    });
+
+    alert('Data berhasil ditambah');
+
+    ambilData();
+
+  } finally {
+
+    hideLoading();
+  }
+}
+
+async function updateData() {
+
+  showLoading();
+
+  try {
+
+    const payload = {
+
+      action: 'update',
+
+      id: selectedIndex,
+
+      tanggal:
+        document.getElementById('tanggal').value,
+
+      jenis:
+        document.getElementById('jenis').value,
+
+      keterangan:
+        document.getElementById('keterangan').value,
+
+      jumlah:
+        document.getElementById('jumlah').value,
+    };
+
+    await fetch(WRITE_URL, {
+
+      method: 'POST',
+
+      body: JSON.stringify(payload)
+    });
+
+    alert('Data berhasil diupdate');
+
+    selectedIndex = null;
+
+    ambilData();
+
+  } finally {
+
+    hideLoading();
+  }
+}
+
+async function hapusData(id) {
+
+  const konfirmasi =
+    confirm('Hapus data ini?');
+
+  if(!konfirmasi) return;
+
+  showLoading();
+
+  try {
+
+    await fetch(WRITE_URL, {
+
+      method: 'POST',
+
+      body: JSON.stringify({
+
+        action: 'delete',
+
+        id: id
+      })
+    });
+
+    alert('Data berhasil dihapus');
+
+    ambilData();
+
+  } finally {
+
+    hideLoading();
+  }
+}
+
+async function editData(id) {
+
+  const res =
+    await fetch(READ_URL);
+
+  const result =
+    await res.json();
+
+  const rows =
+    result.values || [];
+
+  const data = rows
+    .slice(1)
+    .map((row, index) => ({
+
+      id: index + 2,
+
+      tanggal:
+        row[0] || '',
+
+      jenis:
+        row[1] || '',
+
+      keterangan:
+        row[2] || '',
+
+      jumlah:
+        row[3] || 0
+    }));
+
+  const item =
+    data.find(i => i.id == id);
+
+  document.getElementById('tanggal').value =
+    item.tanggal;
+
+  document.getElementById('jenis').value =
+    item.jenis;
+
+  document.getElementById('keterangan').value =
+    item.keterangan;
+
+  document.getElementById('jumlah').value =
+    item.jumlah;
+
+  selectedIndex = id;
+
+  showPage('input');
+
+  alert('Mode edit aktif');
+}
+
+function renderRekap(data) {
+
+  const tbodyPemasukan =
+    document.getElementById('tbodyPemasukan');
+
+  const tbodyPengeluaran =
+    document.getElementById('tbodyPengeluaran');
+
+  tbodyPemasukan.innerHTML = '';
+  tbodyPengeluaran.innerHTML = '';
+
+  let totalPemasukan = 0;
+  let totalPengeluaran = 0;
+
+  const filterBulan =
+    document.getElementById('filterBulan').value;
+
+  if(filterBulan) {
+
+    data = data.filter(item => {
+
+      const bulan =
+        item.tanggal.split('-')[1];
+
+      return bulan === filterBulan;
+    });
+  }
+
+  data.reverse().forEach((item, index) => {
+
+    const jumlah =
+      Number(item.jumlah);
+
+    const row = `
+
+      <tr class="border-b">
+
+        <td class="p-3">
+          ${item.tanggal}
+        </td>
+
+        <td class="p-3">
+          ${item.keterangan}
+        </td>
+
+        <td class="p-3">
+          Rp ${jumlah.toLocaleString('id-ID')}
+        </td>
+
+      </tr>
+    `;
+
+
+    if(item.jenis === 'pemasukan') {
+
+      totalPemasukan += jumlah;
+
+      tbodyPemasukan.innerHTML += row;
+    }
+
+    if(item.jenis === 'pengeluaran') {
+
+      totalPengeluaran += jumlah;
+
+      tbodyPengeluaran.innerHTML += row;
+    }
+
+  });
+
+  document.getElementById(
+    'totalPemasukanTabel'
+  ).innerText =
+    'Rp ' +
+    totalPemasukan.toLocaleString('id-ID');
+
+  document.getElementById(
+    'totalPengeluaranTabel'
+  ).innerText =
+    'Rp ' +
+    totalPengeluaran.toLocaleString('id-ID');
+
+  const sisaSaldo =
+    totalPemasukan - totalPengeluaran;
+
+  document.getElementById(
+    'sisaSaldoTabel'
+  ).innerText =
+    'Rp ' +
+    sisaSaldo.toLocaleString('id-ID');
+}
+
+function renderRiwayat(data) {
+
+  const tbodyRiwayat =
+    document.getElementById('tbodyRiwayat');
+
+  tbodyRiwayat.innerHTML = '';
+
+  data.reverse().forEach(item => {
+
+    const jumlah =
+      Number(item.jumlah);
+
+    tbodyRiwayat.innerHTML += `
+
+      <tr class="border-b">
+
+        <td class="p-3">
+          ${item.tanggal}
+        </td>
+
+        <td class="p-3">
+          ${item.jenis}
+        </td>
+
+        <td class="p-3">
+          ${item.keterangan}
+        </td>
+
+        <td class="p-3">
+          Rp ${jumlah.toLocaleString('id-ID')}
+        </td>
+
+        <td class="p-3 text-center">
+
+          <button
+            onclick="editData(${item.id})"
+            class="bg-yellow-500 text-white px-3 py-1 rounded mr-2"
+          >
+            Edit
+          </button>
+
+          <button
+            onclick="hapusData(${item.id})"
+            class="bg-red-600 text-white px-3 py-1 rounded"
+          >
+            Hapus
+          </button>
+
+        </td>
+
+      </tr>
+    `;
+  });
+}
+
+function renderSummary(data) {
+
+  const pemasukan = data
+    .filter(i => i.jenis === 'pemasukan')
+    .reduce((a,b) =>
+      a + Number(b.jumlah), 0);
+
+  const pengeluaran = data
+    .filter(i => i.jenis === 'pengeluaran')
+    .reduce((a,b) =>
+      a + Number(b.jumlah), 0);
+
+  // TOTAL KAS
+  const kas = data
+    .filter(i =>
+      i.jenis === 'pengeluaran' &&
+      i.keterangan.toLowerCase() === 'kas'
+    )
+    .reduce((a,b) =>
+      a + Number(b.jumlah), 0);
+
+  const saldo =
+    pemasukan - pengeluaran;
+
+  document.getElementById(
+    'totalPemasukan'
+  ).innerText =
+    'Rp ' +
+    pemasukan.toLocaleString('id-ID');
+
+  document.getElementById(
+    'totalPengeluaran'
+  ).innerText =
+    'Rp ' +
+    pengeluaran.toLocaleString('id-ID');
+
+  document.getElementById(
+    'saldo'
+  ).innerText =
+    'Rp ' +
+    saldo.toLocaleString('id-ID');
+
+  document.getElementById(
+    'totalKas'
+  ).innerText =
+    'Rp ' +
+    kas.toLocaleString('id-ID');
+}
+
+function renderChart(data) {
+
+  const pemasukan =
+    data.filter(
+      item => item.jenis === 'pemasukan'
+    );
+
+  const bulanMap = {
+
+    '01': 'Jan',
+    '02': 'Feb',
+    '03': 'Mar',
+    '04': 'Apr',
+    '05': 'Mei',
+    '06': 'Jun',
+    '07': 'Jul',
+    '08': 'Agu',
+    '09': 'Sep',
+    '10': 'Okt',
+    '11': 'Nov',
+    '12': 'Des'
+  };
+
+  const totalPerBulan = {};
+
+  pemasukan.forEach(item => {
+
+    const bulan =
+      item.tanggal.split('-')[1];
+
+    if(!totalPerBulan[bulan]) {
+
+      totalPerBulan[bulan] = 0;
+    }
+
+    totalPerBulan[bulan] +=
+      Number(item.jumlah);
+  });
+
+  const labels =
+    Object.keys(totalPerBulan)
+      .sort()
+      .map(b => bulanMap[b]);
+
+  const values =
+    Object.keys(totalPerBulan)
+      .sort()
+      .map(b => totalPerBulan[b]);
+
+  const ctx =
+  document
+    .getElementById('chartKeuangan')
+    .getContext('2d');
+
+  if(chart) {
+
+    chart.destroy();
+  }
+
+  chart = new Chart(ctx, {
+
+    type: 'line',
+
+    data: {
+
+      labels: labels,
+
+      datasets: [{
+
+        label: 'Pemasukan per Bulan',
+
+        data: values,
+
+        tension: 0.4,
+
+        fill: true,
+
+        borderWidth: 3,
+
+        pointRadius: 5,
+
+        pointHoverRadius: 7
+      }]
+    },
+
+    options: {
+
+      responsive: true,
+
+      plugins: {
+
+        legend: {
+
+          display: true
+        }
+      },
+
+      scales: {
+
+        y: {
+
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+ambilData();
+showPage('dashboard');
+</script>
+
+</body>
+</html>
