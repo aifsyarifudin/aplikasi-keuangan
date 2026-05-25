@@ -66,6 +66,14 @@
         Rekap
       </button>
 
+      <button
+        id="menuKas"
+        onclick="showPage('kas')"
+        class="px-4 py-2 rounded-lg transition duration-200 hover:bg-blue-500 active:scale-95"
+      >
+        Kas
+      </button>
+
     </div>
 
   </div>
@@ -75,6 +83,150 @@
 <div class="p-6 pt-28">
 
 <div class="max-w-6xl mx-auto">
+
+  <!-- KAS -->
+    <div id="kasPage" class="hidden">
+
+      <h1 class="text-3xl font-bold mb-6">
+        Manajemen Kas
+      </h1>
+
+      <!-- TABEL PEMASUKAN KAS -->
+      <div class="bg-white rounded-xl shadow overflow-auto mb-6">
+
+        <div class="bg-green-600 text-white p-4 font-bold text-lg">
+          Pemasukan Kas
+        </div>
+
+        <table class="w-full">
+
+          <thead class="bg-green-100">
+
+            <tr>
+              <th class="p-3 text-left">Tanggal</th>
+              <th class="p-3 text-left">Keterangan</th>
+              <th class="p-3 text-left">Jumlah</th>
+            </tr>
+
+          </thead>
+
+          <tbody id="tbodyKasMasuk"></tbody>
+
+              <tfoot class="bg-green-200 font-bold">
+
+                <tr>
+
+                  <td colspan="2" class="p-3 text-right">
+                    Total Pemasukan Kas
+                  </td>
+
+                  <td id="totalKasMasuk" class="p-3">
+                    Rp 0
+                  </td>
+
+                </tr>
+
+              </tfoot>
+
+        </table>
+
+      </div>
+
+      <!-- INPUT PENGELUARAN -->
+      <div class="bg-white p-6 rounded-xl shadow mb-6">
+
+        <h2 class="text-xl font-bold mb-4">
+          Input Pengeluaran Kas
+        </h2>
+
+        <div class="grid md:grid-cols-3 gap-4">
+
+          <input
+            type="date"
+            id="kasTanggal"
+            class="border p-2 rounded"
+          />
+
+          <input
+            type="text"
+            id="kasKeterangan"
+            placeholder="Keterangan"
+            class="border p-2 rounded"
+          />
+
+          <input
+            type="number"
+            id="kasJumlah"
+            placeholder="Jumlah"
+            class="border p-2 rounded"
+          />
+
+        </div>
+
+        <button
+          onclick="tambahKasKeluar()"
+          class="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+        >
+          Simpan Pengeluaran
+        </button>
+
+      </div>
+
+      <!-- TABEL PENGELUARAN -->
+      <div class="bg-white rounded-xl shadow overflow-auto">
+
+        <div class="bg-red-600 text-white p-4 font-bold text-lg">
+          Pengeluaran Kas
+        </div>
+
+        <table class="w-full">
+
+          <thead class="bg-red-100">
+
+            <tr>
+              <th class="p-3 text-left">Tanggal</th>
+              <th class="p-3 text-left">Keterangan</th>
+              <th class="p-3 text-left">Jumlah</th>
+              <th class="p-3 text-center">Aksi</th>
+            </tr>
+
+          </thead>
+
+          <tbody id="tbodyKasKeluar"></tbody>
+
+            <tfoot class="font-bold">
+
+              <tr class="bg-red-200">
+
+                <td colspan="2" class="p-3 text-right">
+                  Total Pengeluaran Kas
+                </td>
+
+                <td colspan="2" id="totalKasKeluar" class="p-3">
+                  Rp 0
+                </td>
+
+              </tr>
+
+              <tr class="bg-blue-200">
+
+                <td colspan="2" class="p-3 text-right">
+                  Sisa Saldo Kas
+                </td>
+
+                <td colspan="2" id="saldoKas" class="p-3">
+                  Rp 0
+                </td>
+
+              </tr>
+
+            </tfoot>
+
+        </table>
+
+      </div>
+
+    </div>
 
   <!-- DASHBOARD -->
   <div id="dashboardPage">
@@ -110,7 +262,7 @@
         <h2 class="font-bold">
           KAS
         </h2>
-        <p id="totalKas" class="text-2xl">
+        <p id="saldoKasGlobal" class="text-2xl">
           Rp 0
         </p>
       </div>
@@ -375,7 +527,15 @@ const READ_URL =
 const WRITE_URL =
 'https://script.google.com/macros/s/AKfycbxeGcMlt9F5XRGgb4b-UxQeJznAd0H_mFw1QJWPsuZzJFpxoehOeUUgP-kV5aHIDNX93w/exec';
 
-let chart;
+let saldoKasGlobal = 0;
+
+const RANGE_KAS =
+'Kas!A:D';
+
+const READ_KAS_URL =
+`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE_KAS}?key=${API_KEY}`;
+
+let chart = null;
 let selectedIndex = null;
 
 function showPage(page) {
@@ -391,6 +551,10 @@ function showPage(page) {
 
   document
     .getElementById('rekapPage')
+    .classList.add('hidden');
+
+  document
+    .getElementById('kasPage')
     .classList.add('hidden');
 
   // RESET MENU ACTIVE
@@ -412,6 +576,14 @@ function showPage(page) {
 
   document
     .getElementById('menuRekap')
+    .classList.remove(
+      'bg-white',
+      'text-blue-600',
+      'font-bold'
+    );
+
+  document
+    .getElementById('menuKas')
     .classList.remove(
       'bg-white',
       'text-blue-600',
@@ -459,6 +631,22 @@ function showPage(page) {
 
     document
       .getElementById('menuRekap')
+      .classList.add(
+        'bg-white',
+        'text-blue-600',
+        'font-bold'
+      );
+  }
+
+  // KAS
+  if(page === 'kas') {
+
+    document
+      .getElementById('kasPage')
+      .classList.remove('hidden');
+
+    document
+      .getElementById('menuKas')
       .classList.add(
         'bg-white',
         'text-blue-600',
@@ -515,11 +703,16 @@ async function ambilData() {
           row[3] || 0
       }));
 
+    const dataKas =
+      await ambilDataKas();
+
+    renderKas(data, dataKas);
+
+    renderSummary(data);
+
     renderRekap(data);
 
     renderRiwayat(data);
-
-    renderSummary(data);
 
     renderChart(data);
 
@@ -698,6 +891,174 @@ async function editData(id) {
   alert('Mode edit aktif');
 }
 
+async function tambahKasKeluar() {
+
+  showLoading();
+
+  try {
+
+    const payload = {
+
+      sheet: 'Kas',
+
+      action: 'add',
+
+      tanggal:
+        document.getElementById('kasTanggal').value,
+
+      jenis: 'pengeluaran',
+
+      keterangan:
+        document.getElementById('kasKeterangan').value,
+
+      jumlah:
+        document.getElementById('kasJumlah').value,
+    };
+
+    await fetch(WRITE_URL, {
+
+      method: 'POST',
+
+      body: JSON.stringify(payload)
+    });
+
+    alert('Pengeluaran kas berhasil ditambah');
+
+    ambilData();
+
+  } finally {
+
+    hideLoading();
+  }
+}
+
+async function ambilDataKas() {
+
+  const res =
+    await fetch(READ_KAS_URL);
+
+  const result =
+    await res.json();
+
+  const rows =
+    result.values || [];
+
+  return rows
+    .slice(1)
+    .map((row, index) => ({
+
+      id: index + 2,
+
+      tanggal:
+        row[0] || '',
+
+      jenis:
+        row[1] || '',
+
+      keterangan:
+        row[2] || '',
+
+      jumlah:
+        row[3] || 0
+    }));
+}
+
+async function hapusKas(id) {
+
+  if(!confirm('Hapus data kas?')) return;
+
+  showLoading();
+
+  try {
+
+    await fetch(WRITE_URL, {
+
+      method: 'POST',
+
+      body: JSON.stringify({
+
+        sheet: 'Kas',
+
+        action: 'delete',
+
+        id: id
+      })
+    });
+
+    ambilData();
+
+  } finally {
+
+    hideLoading();
+  }
+}
+
+async function editKas(id) {
+
+  const dataKas =
+    await ambilDataKas();
+
+  const item =
+    dataKas.find(x => x.id == id);
+
+  if(!item) return;
+
+  const tanggal =
+    prompt(
+      'Tanggal',
+      item.tanggal
+    );
+
+  const keterangan =
+    prompt(
+      'Keterangan',
+      item.keterangan
+    );
+
+  const jumlah =
+    prompt(
+      'Jumlah',
+      item.jumlah
+    );
+
+  if(!tanggal || !jumlah) return;
+
+  showLoading();
+
+  try {
+
+    await fetch(WRITE_URL, {
+
+      method: 'POST',
+
+      body: JSON.stringify({
+
+        sheet: 'Kas',
+
+        action: 'update',
+
+        id: id,
+
+        tanggal: tanggal,
+
+        jenis: 'pengeluaran',
+
+        keterangan: keterangan,
+
+        jumlah: jumlah
+      })
+    });
+
+    alert('Data kas berhasil diupdate');
+
+    ambilData();
+
+  } finally {
+
+    hideLoading();
+  }
+}
+
 function renderRekap(data) {
 
   const tbodyPemasukan =
@@ -846,6 +1207,143 @@ function renderRiwayat(data) {
     });
 }
 
+function renderKas(dataKeuangan, dataKas) {
+
+  const tbodyKasMasuk =
+    document.getElementById('tbodyKasMasuk');
+
+  const tbodyKasKeluar =
+    document.getElementById('tbodyKasKeluar');
+
+  tbodyKasMasuk.innerHTML = '';
+  tbodyKasKeluar.innerHTML = '';
+
+  // PEMASUKAN KAS
+  const pemasukanKas = dataKeuangan.filter(item =>
+
+    item.jenis === 'pengeluaran' &&
+
+    item.keterangan
+      .trim()
+      .toLowerCase() === 'kas'
+  );
+
+  let totalKasMasuk = 0;
+
+  pemasukanKas
+    .sort((a,b) =>
+      new Date(b.tanggal) - new Date(a.tanggal)
+    )
+
+    .forEach(item => {
+
+      totalKasMasuk += Number(item.jumlah);
+
+      tbodyKasMasuk.innerHTML += `
+
+        <tr class="border-b">
+
+          <td class="p-3">
+            ${item.tanggal}
+          </td>
+
+          <td class="p-3">
+            Setoran Kas
+          </td>
+
+          <td class="p-3">
+            Rp ${Number(item.jumlah)
+              .toLocaleString('id-ID')}
+          </td>
+
+        </tr>
+      `;
+    });
+
+  document.getElementById(
+    'totalKasMasuk'
+  ).innerText =
+    'Rp ' +
+    totalKasMasuk.toLocaleString('id-ID');
+
+  // PENGELUARAN KAS
+  const pengeluaranKas = dataKas.filter(item =>
+
+    item.jenis === 'pengeluaran'
+  );
+
+  let totalKasKeluar = 0;
+
+  pengeluaranKas
+    .sort((a,b) =>
+      new Date(b.tanggal) - new Date(a.tanggal)
+    )
+
+    .forEach(item => {
+
+      totalKasKeluar += Number(item.jumlah);
+
+      tbodyKasKeluar.innerHTML += `
+
+        <tr class="border-b">
+
+          <td class="p-3">
+            ${item.tanggal}
+          </td>
+
+          <td class="p-3">
+            ${item.keterangan}
+          </td>
+
+          <td class="p-3">
+            Rp ${Number(item.jumlah)
+              .toLocaleString('id-ID')}
+          </td>
+
+          <td class="p-3 text-center">
+
+            <button
+              onclick="editKas(${item.id})"
+              class="bg-yellow-500 text-white px-3 py-1 rounded mr-2"
+            >
+              Edit
+            </button>
+
+            <button
+              onclick="hapusKas(${item.id})"
+              class="bg-red-600 text-white px-3 py-1 rounded"
+            >
+              Hapus
+            </button>
+
+          </td>
+
+        </tr>
+      `;
+    });
+
+  const saldoKasGlobal =
+    totalKasMasuk - totalKasKeluar;
+
+  document.getElementById(
+    'totalKasKeluar'
+  ).innerText =
+    'Rp ' +
+    totalKasKeluar.toLocaleString('id-ID');
+
+  document.getElementById(
+    'saldoKas'
+  ).innerText =
+    'Rp ' +
+    saldoKasGlobal.toLocaleString('id-ID');
+
+  document.getElementById(
+    'saldoKasGlobal'
+  ).innerText =
+    'Rp ' +
+    saldoKasGlobal.toLocaleString('id-ID');
+}
+
 function renderSummary(data) {
 
   const pemasukan = data
@@ -855,15 +1353,6 @@ function renderSummary(data) {
 
   const pengeluaran = data
     .filter(i => i.jenis === 'pengeluaran')
-    .reduce((a,b) =>
-      a + Number(b.jumlah), 0);
-
-  // TOTAL KAS
-  const kas = data
-    .filter(i =>
-      i.jenis === 'pengeluaran' &&
-      i.keterangan.toLowerCase() === 'kas'
-    )
     .reduce((a,b) =>
       a + Number(b.jumlah), 0);
 
@@ -887,20 +1376,9 @@ function renderSummary(data) {
   ).innerText =
     'Rp ' +
     saldo.toLocaleString('id-ID');
-
-  document.getElementById(
-    'totalKas'
-  ).innerText =
-    'Rp ' +
-    kas.toLocaleString('id-ID');
 }
 
 function renderChart(data) {
-
-  const pemasukan =
-    data.filter(
-      item => item.jenis === 'pemasukan'
-    );
 
   const bulanMap = {
 
@@ -920,39 +1398,93 @@ function renderChart(data) {
 
   const totalPerBulan = {};
 
-  pemasukan.forEach(item => {
+  data.forEach(item => {
+
+    if(!item.tanggal) return;
+
+    const tanggal =
+      item.tanggal.toString();
+
+    if(!tanggal.includes('-')) return;
 
     const bulan =
-      item.tanggal.split('-')[1];
+      tanggal.split('-')[1];
 
     if(!totalPerBulan[bulan]) {
 
-      totalPerBulan[bulan] = 0;
+      totalPerBulan[bulan] = {
+
+        pemasukan: 0,
+        pengeluaran: 0
+      };
     }
 
-    totalPerBulan[bulan] +=
-      Number(item.jumlah);
+    if(item.jenis === 'pemasukan') {
+
+      totalPerBulan[bulan].pemasukan +=
+        Number(item.jumlah);
+    }
+
+    if(item.jenis === 'pengeluaran') {
+
+      totalPerBulan[bulan].pengeluaran +=
+        Number(item.jumlah);
+    }
   });
 
-  const labels =
-    Object.keys(totalPerBulan)
-      .sort()
-      .map(b => bulanMap[b]);
+  const sortedBulan =
+    Object.keys(totalPerBulan).sort();
 
-  const values =
-    Object.keys(totalPerBulan)
-      .sort()
-      .map(b => totalPerBulan[b]);
+  const labels =
+    sortedBulan.map(
+      b => bulanMap[b]
+    );
+
+  const pemasukanValues =
+    sortedBulan.map(
+      b => totalPerBulan[b].pemasukan
+    );
+
+  const pengeluaranValues =
+    sortedBulan.map(
+      b => totalPerBulan[b].pengeluaran
+    );
 
   const ctx =
-  document
-    .getElementById('chartKeuangan')
-    .getContext('2d');
+    document
+      .getElementById('chartKeuangan')
+      .getContext('2d');
 
   if(chart) {
 
     chart.destroy();
   }
+
+  const gradientMasuk =
+    ctx.createLinearGradient(0,0,0,300);
+
+  gradientMasuk.addColorStop(
+    0,
+    'rgba(34,197,94,0.4)'
+  );
+
+  gradientMasuk.addColorStop(
+    1,
+    'rgba(34,197,94,0)'
+  );
+
+  const gradientKeluar =
+    ctx.createLinearGradient(0,0,0,300);
+
+  gradientKeluar.addColorStop(
+    0,
+    'rgba(239,68,68,0.4)'
+  );
+
+  gradientKeluar.addColorStop(
+    1,
+    'rgba(239,68,68,0)'
+  );
 
   chart = new Chart(ctx, {
 
@@ -962,22 +1494,50 @@ function renderChart(data) {
 
       labels: labels,
 
-      datasets: [{
+      datasets: [
 
-        label: 'Pemasukan per Bulan',
+                  {
 
-        data: values,
+                    label: 'Pemasukan',
 
-        tension: 0.4,
+                    data: pemasukanValues,
 
-        fill: true,
+                    tension: 0.4,
 
-        borderWidth: 3,
+                    fill: true,
 
-        pointRadius: 5,
+                    backgroundColor: gradientMasuk,
 
-        pointHoverRadius: 7
-      }]
+                    borderColor: '#22c55e',
+
+                    borderWidth: 3,
+
+                    pointRadius: 4,
+
+                    pointHoverRadius: 7
+                  },
+
+                  {
+
+                    label: 'Pengeluaran',
+
+                    data: pengeluaranValues,
+
+                    tension: 0.4,
+
+                    fill: true,
+
+                    backgroundColor: gradientKeluar,
+
+                    borderColor: '#ef4444',
+
+                    borderWidth: 3,
+
+                    pointRadius: 4,
+
+                    pointHoverRadius: 7
+                  }
+                ]
     },
 
     options: {
@@ -1007,5 +1567,6 @@ ambilData();
 showPage('dashboard');
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
