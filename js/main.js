@@ -1,0 +1,2 @@
+ambilData();
+showPage('dashboard');
